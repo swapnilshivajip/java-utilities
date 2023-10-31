@@ -58,7 +58,7 @@ public class ExcelUtil {
 
     private void validateSheet() throws Exception {
         if (sheet == null) {
-            throw new Exception("Sheet is not initialized. Select the sheet using setActiveSheet method");
+            throw new Exception("Sheet is not initialized. Select the sheet using setActiveSheet method. If already set, check the sheet name.");
         }
     }
 
@@ -85,6 +85,10 @@ public class ExcelUtil {
     public Sheet getActiveSheet() throws Exception {
         validateSheet();
         return sheet;
+    }
+
+    public String getActiveSheetName() throws Exception {
+        return getActiveSheet().getSheetName();
     }
 
     public void setActiveSheet(String sheetName) throws Exception {
@@ -133,12 +137,46 @@ public class ExcelUtil {
         return cellValue;
     }
 
+    public Object getCellValue(Cell cell) throws Exception {
+        Object cellValue = null;
+        if (cell != null) {
+            if (cell.getCellType() == CellType.NUMERIC) {
+                cellValue = (Double) cell.getNumericCellValue();
+            } else if (cell.getCellType() == CellType.STRING) {
+                cellValue = cell.getStringCellValue();
+            } else if (cell.getCellType() == CellType.BOOLEAN) {
+                cellValue = (Boolean) cell.getBooleanCellValue();
+            }
+        }
+        return cellValue;
+    }
+
     public void exportSheetToWorkbook(String filePath) throws Exception {
         if (filePath.equals("") || filePath.trim().length() == 0) {
             throw new Exception("filePath cannot be empty value. Please pass valid string value.");
         }
         FileOutputStream fileOut = new FileOutputStream(filePath);
         workbook.write(fileOut);
+    }
+
+    public int getCellIndexByText(String text, int rowIndex, boolean exactMatch) throws Exception {
+        int cellIndex = -1;
+        int cellCount = getCellsCount(rowIndex);
+        for(int i=0;i<cellCount;i++){
+            Cell c = getCell(rowIndex, i);
+            String value = getCellValue(c) instanceof String ? ((String) getCellValue(c)) : null;
+            if(value != null){
+                if(exactMatch){
+                    cellIndex = value.equals(text) ? c.getColumnIndex() : -1;
+                }else {
+                    cellIndex = value.contains(text) ? c.getColumnIndex() : -1;
+                }
+            }
+            if(cellIndex != -1){
+                return cellIndex;
+            }
+        }
+        return cellIndex;
     }
 
 }
